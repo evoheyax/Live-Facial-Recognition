@@ -1,4 +1,8 @@
 Live-Facial-Recognition
 ==========================
 
-This project is newer project. The goal is to do facial dectection on live cameras by selecting the best frames to do PCA and SVM on and comparing to a previously trained algorithm. The initial goal is to support 1 camera, with the extestion to 4 cameras.
+This project's goal was to allow for facial recognition from a live camera connected via usb to the computer.
+
+To run, simply start the camera_server.py file.
+
+To add more people to recognize, add another folder with the name in the svm training photos folder, and add 40 pictures of that persons face. That person can now be recognized by the photo.
