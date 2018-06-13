@@ -27,7 +27,7 @@ if __name__ == "__main__":
 	X = np.vstack(images)
 
     # Open Video Capture
-	cap = cv2.VideoCapture(1)
+	cap = cv2.VideoCapture(0)
 
 	if(cap.isOpened()):
 		print("Video Camera 1 Opened Successfully")
