@@ -107,11 +107,16 @@ def load_images():
 	people_list_main = os.listdir(main_folder)
 	people_list_clean = os.listdir(clean_folder)
 
+	print(people_list_main)
+	print(people_list_clean)
+
 	people = dict()
 
 	count = 0
 	while count < len(people_list_main):
 		person = people_list_main[count]
+		print("in person: "+person+str(count))
+
         people[count] = person
         count = count + 1
 
@@ -120,18 +125,18 @@ def load_images():
 
 			print("Cropping and interpoolating images...")
 
-            spec_folder = main_folder+"/"+person
-            print("Spec Folder: ", spec_folder)
+			spec_folder = main_folder+"/"+person
+			print("Spec Folder: ", spec_folder)
 
-        	for filename in os.listdir(spec_folder):
-            	img = cv2.imread(os.path.join(spec_folder, filename))
-            	if img is not None:
-                	img = crop_and_interpool_image(img)
+			for filename in os.listdir(spec_folder):
+				img = cv2.imread(os.path.join(spec_folder, filename))
+				if img is not None:
+					img = crop_and_interpool_image(img)
 					cv2.imwrite(people_list_clean+person+filename,img)
 
-    print("in first loop")
-    for person in people_list:
-        spec_folder = clean_folder+"/"+person
+	print("in first loop")
+	for person in people_list:
+		spec_folder = clean_folder+"/"+person
         print("Spec Folder: ", spec_folder)
         for filename in os.listdir(spec_folder):
             img = cv2.imread(os.path.join(spec_folder, filename))
@@ -139,7 +144,7 @@ def load_images():
                 targets.append(people_list.index(person))
                 images.append(img)
 
-    return (images, targets, people)
+	return (images, targets, people)
 
 def identify(md_pca, md_clf, X_proj, names_dict, frame):
 	cascPath = "haarcascade_frontalface_default.xml"
