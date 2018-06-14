@@ -1,23 +1,16 @@
 from __future__ import print_function, division
-import pattern_recog_func as prf
+import pca_svm_functions as psf
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from facial_recognizer import facial_recognizer
 
 import cv2
 
 import numpy as np
 
 if __name__ == "__main__":
-	print("Loading images...")
-	images, y, names_dict = prf.load_images()
-	images = np.array(images)
 
-	y = np.array(y)
-	X = np.vstack(images)
-    
-	print("Training with PCA+SVM...")
-	md_pca, X_proj = prf.pca_X(X, n_comp = 50)           
-	md_clf = prf.svm_train(X_proj, y)
+	face_decection = facial_recognizer("haarcascade_frontalface_default.xml", "svm_training_photos", "svm_training_photos_cleaned")
 
 	print("Opening Video Camera...")
 	cap = cv2.VideoCapture(0)
@@ -36,12 +29,9 @@ if __name__ == "__main__":
 	while(True):
 		ret, frame = cap.read()
 
-		#plt.imshow(frame)
-		#plt.show()
-
 		#out.write(frame)
 
-		people = prf.identify(md_pca, md_clf, X_proj, names_dict, frame)
+		people = face_decection.identify(frame)
 		for person in people:
 			print("{}: Found {}".format(total, person))
 		total = total + 1
