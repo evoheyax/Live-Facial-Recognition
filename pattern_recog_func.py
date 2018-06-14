@@ -82,7 +82,7 @@ def clean_images(people_list_main, people_list_clean, main_folder, clean_folder)
         if(person not in people_list_clean):
             os.mkdir(clean_folder+"/"+person)
 
-            print("Cropping images for"+person)
+            print("    Cropping images")
 
             spec_folder = main_folder+"/"+person
 
