@@ -115,13 +115,13 @@ def load_images():
         people[count] = person
         count = count + 1
 
-		if(person IN people_list_clean):
+        if(person in people_list_clean):
 			os.mkdir(people_list_clean+person)
 
 			print("Cropping and interpoolating images...")
 
-			spec_folder = main_folder+"/"+person
-        	print("Spec Folder: ", spec_folder)
+            spec_folder = main_folder+"/"+person
+            print("Spec Folder: ", spec_folder)
 
         	for filename in os.listdir(spec_folder):
             	img = cv2.imread(os.path.join(spec_folder, filename))
