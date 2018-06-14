@@ -13,10 +13,7 @@ from scipy.interpolate import interp2d, RectBivariateSpline
 
 import os
 
-from itertools import izip
-
 def interpol_im(im, dim1 = 8, dim2 = 8, plot_new_im = False, cmap = 'binary', grid_off = False):
-    
     if((len(im.shape)) == 3):
         im = im[:, :, 0]
     
@@ -36,15 +33,11 @@ def interpol_im(im, dim1 = 8, dim2 = 8, plot_new_im = False, cmap = 'binary', gr
         plt.imshow(new_im, cmap = cmap)
         plt.show()
     
-    new_im_flat = new_im.flatten()
-    return new_im, new_im_flat
+    return new_im.flatten()
 
 def pca_svm_pred(imfile, md_pca, md_clf, dim1 = 45, dim2 = 60):
-    
-    intp_img, intp_img_flat = interpol_im(imfile, dim1 = dim1, dim2 = dim2, plot_new_im = False)
-    
-    intp_img_flat = intp_img_flat.reshape(1, -1)
-    
+    intp_img = interpol_im(imfile, dim1 = dim1, dim2 = dim2)
+    intp_img_flat = intp_img.reshape(1, -1)
     X_proj = md_pca.transform(intp_img_flat)
 
     return md_clf.predict(X_proj)
@@ -79,7 +72,64 @@ def svm_train(X, y, gamma = 0.001, C = 100):
     
     return md_clf
 
-def crop_and_interpool_image(image):
+def clean_images(people_list_main, people_list_clean, main_folder, clean_folder):
+    count = 0
+    while count < len(people_list_main):
+        person = people_list_main[count]
+        print("Checking images for: "+person)
+        count = count + 1
+
+        if(person not in people_list_clean):
+            os.mkdir(clean_folder+"/"+person)
+
+            print("Cropping images for"+person)
+
+            spec_folder = main_folder+"/"+person
+
+            for filename in os.listdir(spec_folder):
+                img = cv2.imread(os.path.join(spec_folder, filename))
+                if img is not None:
+                    new_img = crop_image(img)
+
+                    cv2.imwrite(clean_folder+"/"+person+"/"+filename, new_img)
+
+def load_images_cleaned(people_list_clean, clean_folder):
+    images = []
+    targets = []
+
+    for person in people_list_clean:
+        spec_folder = clean_folder+"/"+person
+
+        for filename in os.listdir(spec_folder):
+            img = cv2.imread(os.path.join(spec_folder, filename))
+
+            if img is not None:
+                interpulated_img = interpol_im(img, 45, 60)
+
+                targets.append(people_list_clean.index(person))
+                images.append(interpulated_img)
+
+    return images, targets
+
+def load_images():
+    main_folder = "svm_training_photos"
+    clean_folder = "svm_training_photos_cleaned"
+
+    people_list_main = os.listdir(main_folder)
+    people_list_clean = os.listdir(clean_folder)
+
+    people = dict()
+    count = 0
+    for person in people_list_main:
+        people[count] = person
+        count = count + 1
+
+    clean_images(people_list_main, people_list_clean, main_folder, clean_folder)
+    images, targets = load_images_cleaned(people_list_main, clean_folder)
+
+    return (images, targets, people)
+
+def crop_image(image):
     cascPath = "haarcascade_frontalface_default.xml"
     faceCascade = cv2.CascadeClassifier(cascPath)
 
@@ -94,75 +144,27 @@ def crop_and_interpool_image(image):
 
     for (x, y, w, h) in faces:
         image = image[y:y+h, x:x+w]
-    image, image_flattened = interpol_im(image, 45, 60)
-    return image_flattened
 
-def load_images():
-	main_folder = "svm_training_photos"
-	clean_folder = "svm_training_photos_cleaned"
-	images = []
-	targets = []
-	count = 0
-
-	people_list_main = os.listdir(main_folder)
-	people_list_clean = os.listdir(clean_folder)
-
-	print(people_list_main)
-	print(people_list_clean)
-
-	people = dict()
-
-	count = 0
-	while count < len(people_list_main):
-		person = people_list_main[count]
-		print("in person: "+person+str(count))
-
-        people[count] = person
-        count = count + 1
-
-        if(person in people_list_clean):
-			os.mkdir(people_list_clean+person)
-
-			print("Cropping and interpoolating images...")
-
-			spec_folder = main_folder+"/"+person
-			print("Spec Folder: ", spec_folder)
-
-			for filename in os.listdir(spec_folder):
-				img = cv2.imread(os.path.join(spec_folder, filename))
-				if img is not None:
-					img = crop_and_interpool_image(img)
-					cv2.imwrite(people_list_clean+person+filename,img)
-
-	print("in first loop")
-	for person in people_list:
-		spec_folder = clean_folder+"/"+person
-        print("Spec Folder: ", spec_folder)
-        for filename in os.listdir(spec_folder):
-            img = cv2.imread(os.path.join(spec_folder, filename))
-            if img is not None:
-                targets.append(people_list.index(person))
-                images.append(img)
-
-	return (images, targets, people)
+    return image
 
 def identify(md_pca, md_clf, X_proj, names_dict, frame):
-	cascPath = "haarcascade_frontalface_default.xml"
-	faceCascade = cv2.CascadeClassifier(cascPath)
+    cascPath = "haarcascade_frontalface_default.xml"
+    faceCascade = cv2.CascadeClassifier(cascPath)
   
-	frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-	faces = faceCascade.detectMultiScale(
+    faces = faceCascade.detectMultiScale(
                                          frame_gray,
                                          scaleFactor=1.3,
                                          minNeighbors=5,
                                          minSize=(50, 50),
                                          flags = cv2.CASCADE_SCALE_IMAGE
                                          )
-	people = list()
-	for (x, y, w, h) in faces:
-		im = frame[y:y+h, x:x+w]
-		prediction = pca_svm_pred(im, md_pca, md_clf)[0]
-		people.append(names_dict[prediction])
+    people = list()
+    for (x, y, w, h) in faces:
+        im = frame[y:y+h, x:x+w]
+        #im = cv2.imread("/svm_training_photos/Luke/Luke_0.png")
+        prediction = pca_svm_pred(im, md_pca, md_clf)[0]
+        people.append(names_dict[prediction])
 
-	return people
+    return people
