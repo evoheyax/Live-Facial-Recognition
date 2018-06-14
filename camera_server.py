@@ -13,7 +13,7 @@ if __name__ == "__main__":
 	# Load and Train SVM
 	print("Loading images...")
 
-	images, y, names_dict = prf.load_images("svm_training_photos", 4)
+	images, y, names_dict = prf.load_images()
 
 	images = np.array(images)
 
@@ -25,9 +25,18 @@ if __name__ == "__main__":
 		images[i] = prf.crop_and_interpool_image(images[i])
 
 	X = np.vstack(images)
+    
+	md_pca, X_proj = prf.pca_X(X, n_comp = 50)
+                                        
+	md_clf = prf.svm_train(X_proj, y)
 
     # Open Video Capture
 	cap = cv2.VideoCapture(0)
+
+	fourcc = cv2.cv.CV_FOURCC(*'XVID')
+	out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
+
+	ret, frame = cap.read()
 
 	if(cap.isOpened()):
 		print("Video Camera 1 Opened Successfully")
@@ -38,15 +47,20 @@ if __name__ == "__main__":
 	while(True):
 		ret, frame = cap.read()
 
-		#gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-		#plt.imshow(gray)
+		#plt.imshow(frame)
 		#plt.show()
 
-		people = prf.identify(X, y, names_dict, frame)
+		out.write(frame)
+
+		people = prf.identify(md_pca, md_clf, X_proj, names_dict, frame)
 		for person in people:
 			print("{}: Found {}".format(total, person))
 		total = total + 1
 
+		if cv2.waitKey(1) & 0xFF == ord('q'):
+			break
+
 	# When everything done, release the capture
 	cap.release()
+	out.release()
 	cv2.destroyAllWindows()

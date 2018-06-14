@@ -97,56 +97,67 @@ def crop_and_interpool_image(image):
     image, image_flattened = interpol_im(image, 45, 60)
     return image_flattened
 
-def load_images(folder, times):
-    images = []
-    targets = []
-    count = 0
+def load_images():
+	main_folder = "svm_training_photos"
+	clean_folder = "svm_training_photos_cleaned"
+	images = []
+	targets = []
+	count = 0
 
-    people_list = os.listdir(folder)
+	people_list_main = os.listdir(main_folder)
+	people_list_clean = os.listdir(clean_folder)
 
-    people = dict()
+	people = dict()
 
-    count = 0
-    while count < len(people_list): 
-        people[count] = people_list[count];
+	count = 0
+	while count < len(people_list_main):
+		person = people_list_main[count]
+        people[count] = person
         count = count + 1
 
-    count = 0
-    while count < times:
-        print("in first loop")
-        for person in people_list:
-            spec_folder = folder+"/"+person
-            print("Spec Folder: ", spec_folder)
-            for filename in os.listdir(spec_folder):
-                img = cv2.imread(os.path.join(spec_folder, filename))
-                if img is not None:
-                    targets.append(people_list.index(person))
-                    images.append(img)
-        count = count + 1
+		if(person IN people_list_clean):
+			os.mkdir(people_list_clean+person)
+
+			print("Cropping and interpoolating images...")
+
+			spec_folder = main_folder+"/"+person
+        	print("Spec Folder: ", spec_folder)
+
+        	for filename in os.listdir(spec_folder):
+            	img = cv2.imread(os.path.join(spec_folder, filename))
+            	if img is not None:
+                	img = crop_and_interpool_image(img)
+					cv2.imwrite(people_list_clean+person+filename,img)
+
+    print("in first loop")
+    for person in people_list:
+        spec_folder = clean_folder+"/"+person
+        print("Spec Folder: ", spec_folder)
+        for filename in os.listdir(spec_folder):
+            img = cv2.imread(os.path.join(spec_folder, filename))
+            if img is not None:
+                targets.append(people_list.index(person))
+                images.append(img)
 
     return (images, targets, people)
 
-def identify(X, y, names_dict, frame):
-    cascPath = "haarcascade_frontalface_default.xml"
-    faceCascade = cv2.CascadeClassifier(cascPath)
-    
-    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = faceCascade.detectMultiScale(
+def identify(md_pca, md_clf, X_proj, names_dict, frame):
+	cascPath = "haarcascade_frontalface_default.xml"
+	faceCascade = cv2.CascadeClassifier(cascPath)
+  
+	frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+	faces = faceCascade.detectMultiScale(
                                          frame_gray,
                                          scaleFactor=1.3,
                                          minNeighbors=5,
                                          minSize=(50, 50),
                                          flags = cv2.CASCADE_SCALE_IMAGE
                                          )
-        
-    md_pca, X_proj = pca_X(X, n_comp = 50)
-                                         
-    md_clf = svm_train(X_proj, y)
-    
-    people = list()
-    for (x, y, w, h) in faces:
-        im = frame[y:y+h, x:x+w]
-        prediction = pca_svm_pred(im, md_pca, md_clf)[0]
-        people.append(names_dict[prediction])
+	people = list()
+	for (x, y, w, h) in faces:
+		im = frame[y:y+h, x:x+w]
+		prediction = pca_svm_pred(im, md_pca, md_clf)[0]
+		people.append(names_dict[prediction])
 
-    return people
+	return people
