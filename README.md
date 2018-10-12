@@ -1,6 +1,8 @@
 Live-Facial-Recognition
 ==========================
 
+![alt text](http://tinypic.com/r/2n9yy6s/9)
+
 This project's goal was to allow for facial recognition from a live camera connected via usb to the computer.
 
 To run, simply start the camera_server.py file.
