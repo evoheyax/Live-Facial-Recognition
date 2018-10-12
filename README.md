@@ -1,7 +1,7 @@
 Live-Facial-Recognition
 ==========================
 
-![Facial recognition example](http://tinypic.com/r/2n9yy6s/9)
+![Facial recognition example](http://i64.tinypic.com/2n9yy6s.jpg)
 
 This project's goal was to allow for facial recognition from a live camera connected via usb to the computer.
 
